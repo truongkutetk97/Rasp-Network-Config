@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network config</title>
+</head>
+<body>
+    <h1 style="text-align: center; color: #0077be;">Rasp Network Dynamic Configuration</h1>
+
+    <div style="display: flex; flex-direction: row;">
+        <div style="flex: 1;">
+            <!-- Current form -->
+            <p>Add new Wi-Fi configuration</p>
+            <form id="add_config" action="/process" method="POST">
+                <label for="id">SSID:</label>
+                <input type="text" id="id" name="id"><br><br>
+    
+                <label for="password">PSK:</label>
+                <input type="text" id="password" name="password"><br><br>
+    
+                <input type="submit" value="Add">
+            </form>
+        </div>
+    
+        <div style="flex: 1;">
+            <!-- New form -->
+            <p>Remove Wi-Fi configuration</p>
+            <form id="remove_config" action="/remove" method="POST">
+                <label for="network_id">Network ID:</label>
+                <input type="text" id="new_password" name="new_password"><br><br>
+                <input type="submit" value="Remove">
+            </form>
+        </div>
+    </div>
+
+    <p><span id="textbox"></span></p>
+
+    <form action="/" method="POST">
+        <label for="wpaconfig">wpa_supplicant.conf:</label><br>
+        <textarea id="wpaconfig" name="wpaconfig" rows="20" cols="100" readonly>{{ wpa_data }}</textarea><br><br>
+    </form>
+
+    <form action="/" method="GET">
+        <label for="ifconfig:">Interface Configuration:</label><br>
+        <input type="submit" value="Refresh">
+        <textarea id="ifConfig" name="ifConfig" rows="25" cols="100" readonly>{{ if_config_data }}</textarea><br><br>
+    </form>
+    <script>
+        const form = document.querySelector('#add_config');
+        const form_remove = document.querySelector('#remove_config');
+        const textbox = document.getElementById('textbox');
+        const wpaConfigTextarea = document.getElementById('wpaconfig');
+        let storedValueIndexRemoval = '';
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log("event triggered");
+
+            const id = document.getElementById('id').value;
+            const password = document.getElementById('password').value;
+
+            // Display ID and Password in the text box
+            textbox.textContent = `SSID "${id}" has added.`;
+
+            // Send the ID and Password to a Python script via an HTTP request
+            const response = await fetch('/process', {
+                method: 'POST',
+                body: new URLSearchParams({ 'id': id, 'password': password }),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            const responseData = await response.text();
+
+            // Send the ID and Password to a Python script via an HTTP request
+            const res_wpa = await fetch('/wpaconfig', {
+                method: 'POST',
+                body: new URLSearchParams({ 'id': id, 'password': password }),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            const res_wpa_data = await res_wpa.text();
+            wpaConfigTextarea.value = res_wpa_data;
+
+            console.log(responseData);
+        });
+
+        form_remove.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('new_password').value;
+            if (id !== null && id.trim() !== '') {
+                storedValueIndexRemoval = id;
+            }
+            else
+            {
+                id = storedValueIndexRemoval;
+            }
+
+            const res_remove_wifi_config = await fetch('/remove_wifi_config', {
+                method: 'POST',
+                body: new URLSearchParams({ 'id': id}),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            const res_remove_wifi_config_data = await res_remove_wifi_config.text();
+
+            const res_wpa = await fetch('/wpaconfig', {
+                method: 'POST',
+                body: new URLSearchParams({ 'id': id, 'password': password }),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            const res_wpa_data = await res_wpa.text();
+            wpaConfigTextarea.value = res_wpa_data;
+
+        });
+
+    </script>
+</body>
+</html>
