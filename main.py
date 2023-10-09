@@ -43,7 +43,7 @@ def readWpaSupplicantConf():
         return cleaned_result
     except subprocess.CalledProcessError as e:
         return f"Error: {e}"
-    
+
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
@@ -84,11 +84,18 @@ def remove_wpaconfig():
     remove_cmd = '''sudo wpa_cli remove_network '''+fetch_result
     save_cmd  = ''' sudo wpa_cli save_config'''
     result = subprocess.check_output(remove_cmd, shell=True, text=True)
-    time.sleep(0.2)
+    time.sleep(0.1)
     result2 = subprocess.check_output(save_cmd, shell=True, text=True)
-
     return result
 
+@app.route('/reloadconfig', methods=['POST'])
+def reloadWpaConfig():
+    reload_cmd= '''sudo wpa_cli -i wlan0 reconfigure'''
+    try:
+        result = subprocess.check_output(reload_cmd, shell=True, text=True)
+        return result
+    except subprocess.CalledProcessError as e:
+        return f"reloadWpaConfig Error: {e}"
 
 def main():
     current_date=datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

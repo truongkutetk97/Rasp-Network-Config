@@ -4,7 +4,7 @@
     <title>Network config</title>
 </head>
 <body>
-    <h1 style="text-align: center; color: #0077be;">Rasp Network Dynamic Configuration</h1>
+    <h1 style="text-align: center; color: #0077be;font-size: 16px;">Rasp Network Dynamic Configuration</h1>
 
     <div style="display: flex; flex-direction: row;">
         <div style="flex: 1;">
@@ -33,6 +33,13 @@
     </div>
 
     <p><span id="textbox"></span></p>
+    
+    <form id="reloadconfig" action="/reloadwpaconfig" method="POST">
+        <!-- <label for="wpaconfig">wpa_supplicant.conf:</label><br>
+        <textarea id="wpaconfig" name="wpaconfig" rows="20" cols="100" readonly>{{ wpa_data }}</textarea><br><br> -->
+        <input type="submit"  value="Reload Wi-Fi Configuration">
+    </form>
+    <p><span id="textbox2"></span></p>
 
     <form action="/" method="POST">
         <label for="wpaconfig">wpa_supplicant.conf:</label><br>
@@ -41,13 +48,15 @@
 
     <form action="/" method="GET">
         <label for="ifconfig:">Interface Configuration:</label><br>
+        <textarea id="ifConfig" name="ifConfig" rows="18" cols="100" readonly>{{ if_config_data }}</textarea><br><br>
         <input type="submit" value="Refresh">
-        <textarea id="ifConfig" name="ifConfig" rows="25" cols="100" readonly>{{ if_config_data }}</textarea><br><br>
     </form>
     <script>
         const form = document.querySelector('#add_config');
         const form_remove = document.querySelector('#remove_config');
+        const form_reload = document.querySelector('#reloadconfig');
         const textbox = document.getElementById('textbox');
+        const textbox2 = document.getElementById('textbox2');
         const wpaConfigTextarea = document.getElementById('wpaconfig');
         let storedValueIndexRemoval = '';
 
@@ -117,7 +126,21 @@
             wpaConfigTextarea.value = res_wpa_data;
 
         });
+        form_reload.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            textbox2.textContent = 'Wi-Fi config reloading......';
+            const res_reload_config = await fetch('/reloadconfig', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
 
-    </script>
+            });
+            const res_reload_config_data = await res_reload_config.text();
+            textbox2.textContent = "Wi-Fi config loaded!";
+
+        });
+
+        </script>
 </body>
 </html>
